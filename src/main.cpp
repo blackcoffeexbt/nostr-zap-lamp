@@ -36,5 +36,5 @@ void loop() {
     // create a lightning flash with a random number of flashes
     lightningFlash(random(1,5));
   }
- delay(random(1000, 5000)); 
+ delay(1000); 
 }
