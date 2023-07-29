@@ -15,6 +15,8 @@ void setup() {
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(ledPin, OUTPUT); // initialize digital ledPin as an output.
   randomSeed(analogRead(0)); // initialize random seed with a changing analog value (noise)
+
+  analogWrite(ledPin, defaultLightValue);
 }
 
 void fadeOutFlash(int intensity) {
@@ -90,11 +92,16 @@ void loop() {
       Serial.print(buttonReleaseTime - buttonPressTime);
       Serial.println(" milliseconds");
       unsigned long buttonPressDuration = buttonReleaseTime - buttonPressTime;
-      numFlashes = buttonPressDuration / 1000;
+      // buttonPressDuration / 1000 and round up
+      numFlashes = (buttonPressDuration + 999) / 1000;
 
       Serial.print("Flashing ");
       Serial.print(numFlashes);
       Serial.println(" times");
+
+      // turn off the LED
+      digitalWrite(ledPin, LOW);
+      delay(500);
 
       lightningFlash(numFlashes);
       numFlashes = 0;
