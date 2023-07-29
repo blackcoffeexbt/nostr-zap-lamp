@@ -73,13 +73,12 @@ void loop() {
   if (digitalRead(buttonPin) == LOW) { // button is pressed
     if (buttonPressTime == 0) { // to record only the first press event
       buttonPressTime = millis(); // save the time when button press was detected
-      // increase the led brightness the longer the button is pressed, to a max value of 255
-      int intensity = map(millis() - buttonPressTime, 0, 10000, 0, 255);
-      if (intensity > 255) {
-        intensity = 255;
-      }
-      analogWrite(ledPin, defaultLightValue + intensity); // set the LED to the desired intensity
     }
+
+    // increase LED brightness the longer the button is pressed
+    unsigned long elapsedTime = millis() - buttonPressTime;
+    int brightness = min((int)(255 * elapsedTime / 10000.0), 255); // max out at 255 after 10s
+    analogWrite(ledPin, brightness);  // set the LED brightness
   } else { // button is not pressed
     if (buttonPressTime != 0) { // if a previous button press was recorded
       // quickly fade the LED to 0
