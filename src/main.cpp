@@ -101,7 +101,7 @@ void loop() {
 
       // turn off the LED
       digitalWrite(ledPin, LOW);
-      delay(3000);
+      delay(2000);
 
       lightningFlash(numFlashes);
       numFlashes = 0;
