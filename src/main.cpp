@@ -1,15 +1,18 @@
 #include <Arduino.h>
 // the pin where LED is connected
 int ledPin = 13;
+int buttonPin = 4;
 
 // timing variables
 unsigned long lightningTime = 0; // variable to store the last time lightning was shown
 int lightningInterval = 5000;    // time between lightning strikes in milliseconds
 int fadeInterval = 1;            // how fast to fade the LED
 
-int defaultLightValue = 20;
+int defaultLightValue = 10;
 
 void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
   pinMode(ledPin, OUTPUT); // initialize digital ledPin as an output.
   randomSeed(analogRead(0)); // initialize random seed with a changing analog value (noise)
 }
@@ -41,11 +44,11 @@ void lightningFlash(int numberOfFlashes) {
     digitalWrite(ledPin, HIGH);
 
     // wait for the specified time, longer for the first flash and shorter for subsequent flashes
-    int flashDuration = 250 / flash * random(1,5);
+    int flashDuration = 500 / flash * random(1,3);
     delay(flashDuration / 2);
 
     // fast fade-out
-    for (int i = 255; i >= defaultLightValue; i = i - 2) {
+    for (int i = 255; i >= defaultLightValue; i = i - 1) {
       analogWrite(ledPin, i);  // set the LED brightness
       delay(1);  // wait for a moment
     }
@@ -61,11 +64,43 @@ void lightningFlash(int numberOfFlashes) {
 
 }
 
+uint16_t numFlashes = 0;
+
+unsigned long buttonPressTime = 0;
+unsigned long buttonReleaseTime = 0;
+
 void loop() {
-  lightningFlash(1);
-  delay(2000); 
-  lightningFlash(2);
-  delay(2000); 
-  lightningFlash(3);
-  delay(2000); 
+  if (digitalRead(buttonPin) == LOW) { // button is pressed
+    if (buttonPressTime == 0) { // to record only the first press event
+      buttonPressTime = millis(); // save the time when button press was detected
+      // increase the led brightness the longer the button is pressed, to a max value of 255
+      int intensity = map(millis() - buttonPressTime, 0, 10000, 0, 255);
+      if (intensity > 255) {
+        intensity = 255;
+      }
+      analogWrite(ledPin, defaultLightValue + intensity); // set the LED to the desired intensity
+    }
+  } else { // button is not pressed
+    if (buttonPressTime != 0) { // if a previous button press was recorded
+      // quickly fade the LED to 0
+      for (int i = 255; i >= 0; i = i - 2) {
+        analogWrite(ledPin, i);  // set the LED brightness
+        delay(1);  // wait for a moment
+      }  
+      buttonReleaseTime = millis(); // save the time when button was released
+      Serial.print(buttonReleaseTime - buttonPressTime);
+      Serial.println(" milliseconds");
+      unsigned long buttonPressDuration = buttonReleaseTime - buttonPressTime;
+      numFlashes = buttonPressDuration / 1000;
+
+      Serial.print("Flashing ");
+      Serial.print(numFlashes);
+      Serial.println(" times");
+
+      lightningFlash(numFlashes);
+      numFlashes = 0;
+
+      buttonPressTime = 0; // reset press time for the next button press event
+    }
+  }
 }
